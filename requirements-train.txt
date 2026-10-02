@@ -1,0 +1,3 @@
+# Extra dependencies needed only for train.py, not for the deployed app.
+# Install on Colab/Kaggle: pip install -r requirements.txt -r requirements-train.txt
+kagglehub
