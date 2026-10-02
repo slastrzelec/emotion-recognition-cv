@@ -1,3 +1,6 @@
 # Extra dependencies needed only for train.py, not for the deployed app.
-# Install on Colab/Kaggle: pip install -r requirements.txt -r requirements-train.txt
+# On Colab/Kaggle, torch + torchvision are already preinstalled with a
+# GPU build matching the runtime - do NOT reinstall them via requirements.txt,
+# that can silently swap in a CPU-only or mismatched build. Instead run:
+#   pip install -r requirements-train.txt opencv-python-headless Pillow numpy scikit-learn
 kagglehub

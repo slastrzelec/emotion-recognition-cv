@@ -1,6 +1,6 @@
 streamlit
-torch==2.5.1
-torchvision==0.20.1
+torch>=2.5
+torchvision>=0.20
 opencv-python-headless
 Pillow
 numpy
