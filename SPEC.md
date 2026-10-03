@@ -60,8 +60,7 @@ docs and a working deployment.
   carried into the new repo. (Confirmed in the earlier audit that these
   were never committed to git history in the old repo either — but the new
   repo starts clean regardless, and `.gitignore` is set up from commit 1.)
-- These constraints exist specifically because an earlier AI-assisted
-  project caused a data-leak-adjacent rejection in a recruitment process —
+- These constraints exist because uploaded face photos are personal data:
   no code gets written before its data-handling approach is specified and
   reviewed.
 
@@ -133,12 +132,3 @@ reached (ResNet: 67.96%).
 - Any feature not already in the old app (e.g. webcam mode) unless it's
   confirmed to already exist and work — this is a rebuild, not a feature
   expansion, beyond the accuracy work above.
-
-## Repo / migration notes
-
-- New repo name: `emotion-recognition-cv`.
-- Old repo `12_emotion-detection-app` and its portfolio page: to be
-  deleted/removed by Sławek himself once he's back at his computer (repo
-  deletion and portfolio edits are not something Claude does unprompted).
-- Old local folder `12_openCV_PyTorch`: once no longer needed, moves to
-  `_to_delete` (Recycle Bin), never a hard delete.
