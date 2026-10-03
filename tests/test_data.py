@@ -64,3 +64,12 @@ def test_class_weights_favor_rare_class(fake_dataset_root):
 def test_get_transform_rejects_unknown_model():
     with pytest.raises(ValueError):
         get_transform("not-a-real-model", train=False)
+
+
+@pytest.mark.parametrize("model_name,expected", [("cnn", (1, 48, 48)), ("resnet", (3, 224, 224))])
+@pytest.mark.parametrize("augment", [True, False])
+def test_train_transform_shape_with_and_without_augment(fake_dataset_root, model_name, expected, augment):
+    root, _ = fake_dataset_root
+    ds = EmotionFolderDataset(root, transform=get_transform(model_name, train=True, augment=augment))
+    img, _ = ds[0]
+    assert img.shape == expected

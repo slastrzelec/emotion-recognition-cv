@@ -74,35 +74,41 @@ class EmotionFolderDataset(Dataset):
         return Counter(label for _, label in self.samples)
 
 
-def get_transform(model_name: str, train: bool) -> transforms.Compose:
+def get_transform(model_name: str, train: bool, augment: bool = True) -> transforms.Compose:
     """Returns the right transform pipeline for a given model.
 
     `cnn`    -> 1x48x48, matches EmotionCNN's input contract.
     `resnet` -> 3x224x224, ImageNet-normalized, matches EmotionResNet's
                 pretrained backbone.
+
+    `augment=False` disables the random train-time augmentation (used for
+    pipeline ablations); the deterministic resize is still applied so the
+    model always gets the input size it expects.
     """
-    augment = [
+    use_augment = train and augment
+    augment_ops = [
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomRotation(10),
         transforms.RandomResizedCrop(
             48 if model_name == "cnn" else 224,
             scale=(0.85, 1.0),
         ),
-    ] if train else []
+    ] if use_augment else []
 
     if model_name == "cnn":
-        resize = [] if train else [transforms.Resize((48, 48))]
+        resize = [] if use_augment else [transforms.Resize((48, 48))]
         return transforms.Compose(
-            resize + augment + [
+            resize + augment_ops + [
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5], std=[0.5]),
             ]
         )
 
     if model_name == "resnet":
-        resize = [] if train else [transforms.Resize((224, 224))]
+        # RandomResizedCrop already outputs 224x224 when augmenting.
+        resize = [] if use_augment else [transforms.Resize((224, 224))]
         return transforms.Compose(
-            resize + augment + [
+            resize + augment_ops + [
                 transforms.Grayscale(num_output_channels=3),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),

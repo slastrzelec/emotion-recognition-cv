@@ -50,11 +50,13 @@ def resolve_data_root() -> str:
     return path
 
 
-def build_dataloaders(model_name: str, data_root: str, batch_size: int):
+def build_dataloaders(model_name: str, data_root: str, batch_size: int, augment: bool = True):
     train_dir = os.path.join(data_root, "train")
     test_dir = os.path.join(data_root, "test")
 
-    train_ds = EmotionFolderDataset(train_dir, transform=get_transform(model_name, train=True))
+    train_ds = EmotionFolderDataset(
+        train_dir, transform=get_transform(model_name, train=True, augment=augment)
+    )
     test_ds = EmotionFolderDataset(test_dir, transform=get_transform(model_name, train=False))
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -71,15 +73,25 @@ def train_one_model(
     lr: float,
     patience: int,
     out_dir: str,
+    use_class_weights: bool = True,
+    augment: bool = True,
+    tag: str = "",
 ) -> str:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"[{model_name}] device: {device}")
+    run_name = f"{model_name}_{tag}" if tag else model_name
+    print(f"[{run_name}] device: {device}")
+    print(f"[{run_name}] pipeline: augment={augment} class_weights={use_class_weights} lr={lr}")
 
-    train_ds, test_ds, train_loader, test_loader = build_dataloaders(model_name, data_root, batch_size)
-    print(f"[{model_name}] train samples: {len(train_ds)}  test samples: {len(test_ds)}")
+    train_ds, test_ds, train_loader, test_loader = build_dataloaders(
+        model_name, data_root, batch_size, augment=augment
+    )
+    print(f"[{run_name}] train samples: {len(train_ds)}  test samples: {len(test_ds)}")
 
-    class_weights = compute_class_weights(train_ds).to(device)
-    print(f"[{model_name}] class weights: {class_weights.tolist()}")
+    if use_class_weights:
+        class_weights = compute_class_weights(train_ds).to(device)
+        print(f"[{run_name}] class weights: {class_weights.tolist()}")
+    else:
+        class_weights = None
 
     model = build_model(model_name, pretrained=True).to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights)
@@ -91,7 +103,7 @@ def train_one_model(
     epochs_without_improvement = 0
 
     os.makedirs(out_dir, exist_ok=True)
-    checkpoint_path = os.path.join(out_dir, f"{model_name}_best.pt")
+    checkpoint_path = os.path.join(out_dir, f"{run_name}_best.pt")
 
     for epoch in range(1, epochs + 1):
         t0 = time.time()
@@ -125,7 +137,7 @@ def train_one_model(
         scheduler.step(test_acc)
         elapsed = time.time() - t0
         print(
-            f"[{model_name}] epoch {epoch}/{epochs}  "
+            f"[{run_name}] epoch {epoch}/{epochs}  "
             f"train_loss={train_loss:.4f} train_acc={train_acc:.2f}%  "
             f"test_acc={test_acc:.2f}%  ({elapsed:.0f}s)"
         )
@@ -138,14 +150,14 @@ def train_one_model(
                 {"model_state_dict": best_state, "model_name": model_name, "accuracy": best_acc, "epoch": epoch},
                 checkpoint_path,
             )
-            print(f"[{model_name}] saved new best checkpoint: {best_acc:.2f}%")
+            print(f"[{run_name}] saved new best checkpoint: {best_acc:.2f}%")
         else:
             epochs_without_improvement += 1
             if epochs_without_improvement >= patience:
-                print(f"[{model_name}] no improvement for {patience} epochs — stopping early.")
+                print(f"[{run_name}] no improvement for {patience} epochs — stopping early.")
                 break
 
-    print(f"[{model_name}] done. best test accuracy: {best_acc:.2f}%  -> {checkpoint_path}")
+    print(f"[{run_name}] done. best test accuracy: {best_acc:.2f}%  -> {checkpoint_path}")
     return checkpoint_path
 
 
@@ -157,6 +169,9 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--patience", type=int, default=6, help="early-stopping patience, in epochs")
     parser.add_argument("--out-dir", default="checkpoints")
+    parser.add_argument("--no-class-weights", action="store_true", help="plain unweighted cross-entropy")
+    parser.add_argument("--no-augment", action="store_true", help="disable random train-time augmentation")
+    parser.add_argument("--tag", default="", help="suffix for the checkpoint name, e.g. noaug -> cnn_noaug_best.pt")
     args = parser.parse_args()
 
     data_root = resolve_data_root()
@@ -172,6 +187,9 @@ def main() -> None:
             lr=args.lr,
             patience=args.patience,
             out_dir=args.out_dir,
+            use_class_weights=not args.no_class_weights,
+            augment=not args.no_augment,
+            tag=args.tag,
         )
 
 

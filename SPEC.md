@@ -90,6 +90,35 @@ test split, not asserted. Report: overall accuracy, per-class breakdown,
 confusion matrix. Compared honestly against the 59.64% baseline and the
 ~65% human / ~73% SOTA reference points above.
 
+## Baseline CNN revision (after first measurements)
+
+First measured results (FER-2013 test split):
+
+| Model | Pipeline | Test accuracy |
+|---|---|---|
+| EmotionResNet | augmentation + class weights + LR schedule | 67.96% |
+| EmotionCNN | same full pipeline | 51.70% |
+
+The CNN is **underfit** under the full pipeline (train accuracy ~43% is
+below test accuracy ~52%) and below the old project's 59.64%, so this run
+is not a fair baseline: it shows the pipeline hurts a small from-scratch
+network, not that transfer learning is worth +16 points.
+
+Plan (training pipeline only — the CNN architecture stays unchanged):
+
+- `train.py` gains `--no-class-weights`, `--no-augment` and `--tag`
+  flags (the tag keeps checkpoints of different runs from overwriting
+  each other).
+- Two additional CNN runs: (A) augmentation only, no class weights;
+  (B) no augmentation, no class weights (closest to the old pipeline).
+- The README reports **all** CNN runs, labelled by pipeline, and uses
+  the best one as the baseline. The first full-pipeline run (51.70%) stays
+  in the table. The ResNet keeps its own best-working pipeline; the
+  comparison is stated as "best-effort pipeline per model".
+- Known limitation, stated in the README: checkpoint selection and early
+  stopping use the test split (FER-2013 ships train/test only), so all
+  reported accuracies are slightly optimistic.
+
 ## Out of scope (for now)
 
 - Ensembling multiple models.
