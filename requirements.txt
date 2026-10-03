@@ -2,7 +2,7 @@
 streamlit
 torch>=2.5
 torchvision>=0.20
-opencv-python-headless
+opencv-python-headless>=4.10,<5
 Pillow
 numpy
 scikit-learn

@@ -51,7 +51,17 @@ def load_model():
 
 @st.cache_resource
 def load_face_cascade():
-    return cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    # Locate the cascade next to the installed cv2 package instead of via
+    # `cv2.data`: OpenCV 5.x wheels no longer ship the Haar cascade files,
+    # so fail with a clear message instead of an AttributeError.
+    path = os.path.join(os.path.dirname(cv2.__file__), "data", "haarcascade_frontalface_default.xml")
+    cascade = cv2.CascadeClassifier(path)
+    if cascade.empty():
+        raise RuntimeError(
+            "Haar cascade file not found in the installed OpenCV package "
+            "(expected opencv-python-headless<5)."
+        )
+    return cascade
 
 
 def preprocess_face(face_bgr: np.ndarray) -> torch.Tensor:
