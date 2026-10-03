@@ -15,6 +15,16 @@ OpenCV Haar Cascade, then classifies each detected face into one of 7
 emotions (Angry, Disgust, Fear, Happy, Neutral, Sad, Surprise) using a
 fine-tuned ResNet18, and shows the per-emotion probability breakdown.
 
+![App screenshot](screenshots/demo.png)
+
+## Example
+
+![Original photo and the app's result: detected face with the predicted emotion](screenshots/example_result.jpg)
+
+![Per-class probabilities for the detected face](screenshots/example_probs.png)
+
+A casual photo, outside the FER-2013 distribution. The model predicts **Neutral (62%)**, with **Happy (35%)** as the second guess — a faint smile splits the probability between the two, which is typical for subtle expressions.
+
 ## How it works
 
 - **Face detection:** OpenCV Haar Cascade (`haarcascade_frontalface_default.xml`).

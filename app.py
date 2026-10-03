@@ -96,14 +96,25 @@ def process_image(pil_image: Image.Image, model, device, face_cascade):
 
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(48, 48))
 
+    # Scale annotation size with the image so labels stay readable on
+    # large photos.
+    scale = max(0.8, bgr.shape[1] / 900)
+    box_thickness = max(3, int(round(scale * 3)))
+    text_thickness = max(2, int(round(scale * 2)))
+
     results = []
     for i, (x, y, w, h) in enumerate(faces):
         face_roi = bgr[y : y + h, x : x + w]
         emotion, confidence, all_probs = predict_emotion(model, device, face_roi)
         color = EMOTION_COLORS[emotion]
-        cv2.rectangle(bgr, (x, y), (x + w, y + h), color, 3)
-        cv2.putText(bgr, f"{emotion} {confidence:.0f}%", (x, max(0, y - 10)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+        cv2.rectangle(bgr, (x, y), (x + w, y + h), color, box_thickness)
+
+        label = f"{emotion} {confidence:.0f}%"
+        (tw, th), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, scale, text_thickness)
+        top = max(0, y - th - baseline - 8)
+        cv2.rectangle(bgr, (x, top), (x + tw + 8, top + th + baseline + 8), color, -1)
+        cv2.putText(bgr, label, (x + 4, top + th + 4),
+                    cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), text_thickness)
         results.append({
             "face_number": i + 1,
             "emotion": emotion,
