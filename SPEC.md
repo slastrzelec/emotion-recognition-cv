@@ -119,6 +119,13 @@ Plan (training pipeline only — the CNN architecture stays unchanged):
   stopping use the test split (FER-2013 ships train/test only), so all
   reported accuracies are slightly optimistic.
 
+Outcome of the extra CNN runs: (A) augmentation only reached 61.54%
+(stopped by the 40-epoch cap while still improving); (B) no augmentation
+reached 63.11% and is the reported baseline. The ResNet's lead over the
+best CNN is ~4.9 accuracy points (macro F1 0.66 vs 0.53), not the ~16
+points the first, underfit run suggested. The ~68-72% target was not
+reached (ResNet: 67.96%).
+
 ## Out of scope (for now)
 
 - Ensembling multiple models.
