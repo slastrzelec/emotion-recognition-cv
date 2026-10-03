@@ -158,55 +158,67 @@ def main():
         )
         return
 
+    # Controls first, full width, so the two images below start on the same
+    # row and are displayed at the same height.
+    st.subheader("📤 Image")
+    uploaded = st.file_uploader("Upload a photo", type=ALLOWED_TYPES)
+    if uploaded is not None:
+        st.session_state.use_sample = False
+    if uploaded is None and os.path.exists(SAMPLE_IMAGE_PATH):
+        if st.button("Use the sample photo"):
+            st.session_state.use_sample = True
+
+    using_sample = uploaded is None and st.session_state.get("use_sample", False)
+
+    image = None
+    if using_sample:
+        st.caption("Using the bundled sample photo.")
+        image = Image.open(SAMPLE_IMAGE_PATH)
+    elif uploaded is not None:
+        if uploaded.size > MAX_UPLOAD_MB * 1024 * 1024:
+            st.error(f"File too large (max {MAX_UPLOAD_MB} MB).")
+        else:
+            try:
+                image = Image.open(uploaded)
+            except Exception:
+                st.error("Could not read this file as an image. Please upload a valid JPG or PNG.")
+
+    if image is not None:
+        if st.button("🔍 Analyze", type="primary", width="stretch"):
+            with st.spinner("Analyzing..."):
+                annotated, results = process_image(image, model, device, face_cascade)
+                st.session_state["annotated"] = annotated
+                st.session_state["results"] = results
+    else:
+        st.info("Upload a photo or use the sample above.")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("📤 Image")
-        uploaded = st.file_uploader("Upload a photo", type=ALLOWED_TYPES)
-        if uploaded is not None:
-            st.session_state.use_sample = False
-        if uploaded is None and os.path.exists(SAMPLE_IMAGE_PATH):
-            if st.button("Use the sample photo"):
-                st.session_state.use_sample = True
-
-        using_sample = uploaded is None and st.session_state.get("use_sample", False)
-
-        image = None
-        if using_sample:
-            st.caption("Using the bundled sample photo.")
-            image = Image.open(SAMPLE_IMAGE_PATH)
-        elif uploaded is not None:
-            if uploaded.size > MAX_UPLOAD_MB * 1024 * 1024:
-                st.error(f"File too large (max {MAX_UPLOAD_MB} MB).")
-            else:
-                try:
-                    image = Image.open(uploaded)
-                except Exception:
-                    st.error("Could not read this file as an image. Please upload a valid JPG or PNG.")
-
+        st.subheader("🖼️ Original")
         if image is not None:
-            st.image(image, use_container_width=True)
-            if st.button("🔍 Analyze", type="primary", use_container_width=True):
-                with st.spinner("Analyzing..."):
-                    annotated, results = process_image(image, model, device, face_cascade)
-                    st.session_state["annotated"] = annotated
-                    st.session_state["results"] = results
+            st.image(image, width="stretch")
         else:
-            st.info("Upload a photo or use the sample above.")
+            st.caption("No image selected yet.")
 
     with col2:
         st.subheader("📊 Results")
         results = st.session_state.get("results")
         if results:
-            st.image(st.session_state["annotated"], use_container_width=True)
-            for r in results:
-                st.markdown(f"**Face {r['face_number']}:** {r['emotion']} ({r['confidence']:.0f}%)")
-                probs_dict = {EMOTION_LABELS[i]: float(r["probabilities"][i]) for i in range(len(EMOTION_LABELS))}
-                st.bar_chart(probs_dict)
+            st.image(st.session_state["annotated"], width="stretch")
         elif results is not None:
             st.warning("No faces detected in this image.")
         else:
             st.info("Analyze an image to see results here.")
+
+    # Per-face probability charts below, full width, so they don't push the
+    # images out of alignment.
+    results = st.session_state.get("results")
+    if results:
+        for r in results:
+            st.markdown(f"**Face {r['face_number']}:** {r['emotion']} ({r['confidence']:.0f}%)")
+            probs_dict = {EMOTION_LABELS[i]: float(r["probabilities"][i]) for i in range(len(EMOTION_LABELS))}
+            st.bar_chart(probs_dict)
 
 
 if __name__ == "__main__":

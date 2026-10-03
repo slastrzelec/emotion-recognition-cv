@@ -3,7 +3,7 @@
 Face detection + facial emotion classification, running entirely locally —
 no image you upload is ever sent to a third-party API or stored on disk.
 
-**Live demo:** _to be added after deployment_
+**Live demo:** https://emotion-recognition-cv.streamlit.app/  
 **Repository:** https://github.com/slastrzelec/emotion-recognition-cv
 
 ![tests](https://github.com/slastrzelec/emotion-recognition-cv/actions/workflows/tests.yml/badge.svg)
@@ -13,7 +13,7 @@ no image you upload is ever sent to a third-party API or stored on disk.
 Upload a photo (or use the bundled sample). The app detects faces with an
 OpenCV Haar Cascade, then classifies each detected face into one of 7
 emotions (Angry, Disgust, Fear, Happy, Neutral, Sad, Surprise) using a
-fine-tuned CNN, and shows the per-emotion probability breakdown.
+fine-tuned ResNet18, and shows the per-emotion probability breakdown.
 
 ## How it works
 

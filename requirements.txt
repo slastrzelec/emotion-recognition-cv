@@ -1,5 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-streamlit
+streamlit>=1.50
 torch>=2.5
 torchvision>=0.20
 opencv-python-headless>=4.10,<5
